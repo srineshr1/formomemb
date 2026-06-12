@@ -1,0 +1,915 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Design Catalogue Gallery</title>
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #13131a;
+    --surface2: #1c1c26;
+    --border: rgba(255,255,255,0.07);
+    --accent: #c8a96e;
+    --accent2: #e8c98a;
+    --text: #f0ede8;
+    --text2: #9a9490;
+    --text3: #5a5650;
+    --gold: #d4a847;
+    --gold-light: #f0c96a;
+    --rose: #c4737a;
+    --teal: #5a9e9a;
+    --radius: 16px;
+    --radius-sm: 10px;
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html { background: var(--bg); }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overscroll-behavior: none;
+  }
+
+  /* ── Header ── */
+  .header {
+    position: sticky; top: 0; z-index: 100;
+    padding: calc(var(--safe-top) + 12px) 16px 12px;
+    background: rgba(10,10,15,0.85);
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    border-bottom: 1px solid var(--border);
+  }
+  .header-top {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 12px;
+  }
+  .brand {
+    font-size: 20px; font-weight: 700; letter-spacing: -0.5px;
+    background: linear-gradient(135deg, var(--gold-light), var(--accent));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .count-badge {
+    font-size: 11px; color: var(--text3); letter-spacing: 0.5px;
+    background: var(--surface2); padding: 4px 8px; border-radius: 20px;
+    border: 1px solid var(--border);
+  }
+
+  /* ── Search ── */
+  .search-wrap {
+    position: relative; margin-bottom: 10px;
+  }
+  .search-wrap svg {
+    position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+    opacity: 0.4; pointer-events: none;
+  }
+  #search {
+    width: 100%; padding: 10px 12px 10px 38px;
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); color: var(--text);
+    font-size: 15px; outline: none;
+    transition: border-color 0.2s;
+  }
+  #search:focus { border-color: var(--accent); }
+  #search::placeholder { color: var(--text3); }
+
+  /* ── Filter pills ── */
+  .filters {
+    display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px;
+    scrollbar-width: none;
+  }
+  .filters::-webkit-scrollbar { display: none; }
+  .pill {
+    flex-shrink: 0; padding: 6px 14px;
+    border-radius: 20px; border: 1px solid var(--border);
+    background: var(--surface2); color: var(--text2);
+    font-size: 13px; cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .pill.active {
+    background: var(--gold); color: #0a0a0f;
+    border-color: var(--gold); font-weight: 600;
+  }
+
+  /* ── Catalogue grid ── */
+  .catalogue-section {
+    padding: 0 12px 8px;
+    margin-top: 16px;
+  }
+  .section-title {
+    font-size: 11px; letter-spacing: 1.5px; color: var(--text3);
+    text-transform: uppercase; margin-bottom: 10px; padding: 0 4px;
+  }
+
+  .catalogue-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+
+  .cat-card {
+    border-radius: var(--radius);
+    overflow: hidden;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    cursor: pointer;
+    position: relative;
+    transition: transform 0.2s, box-shadow 0.2s;
+    will-change: transform;
+  }
+  .cat-card:active { transform: scale(0.97); }
+  .cat-thumb {
+    width: 100%; aspect-ratio: 1/1.2;
+    object-fit: cover; display: block;
+    background: var(--surface2);
+    transition: transform 0.4s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  .cat-card:active .cat-thumb { transform: scale(1.04); }
+  .cat-info {
+    padding: 10px 10px 12px;
+  }
+  .cat-name {
+    font-size: 12px; font-weight: 600; color: var(--text);
+    line-height: 1.3; margin-bottom: 4px;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .cat-meta {
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .cat-count {
+    font-size: 11px; color: var(--text3);
+  }
+  .cat-tag {
+    font-size: 10px; padding: 2px 7px; border-radius: 10px;
+    font-weight: 500;
+  }
+
+  /* Tag colors */
+  .tag-bridal    { background: rgba(196,115,122,0.18); color: var(--rose); }
+  .tag-rrr       { background: rgba(212,168,71,0.18);  color: var(--gold); }
+  .tag-od        { background: rgba(90,158,154,0.18);  color: var(--teal); }
+  .tag-kids      { background: rgba(130,100,200,0.18); color: #a07ec8; }
+  .tag-katchu    { background: rgba(200,169,110,0.18); color: var(--accent); }
+  .tag-dress     { background: rgba(160,130,100,0.18); color: #c8a06a; }
+  .tag-mirror    { background: rgba(100,140,200,0.18); color: #7aacdc; }
+  .tag-default   { background: rgba(150,150,150,0.12); color: var(--text3); }
+
+  /* ── Lightbox: photo viewer ── */
+  #lightbox {
+    position: fixed; inset: 0; z-index: 500;
+    display: flex; flex-direction: column;
+    background: #000;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.3s cubic-bezier(0.4,0,0.2,1);
+  }
+  #lightbox.open { opacity: 1; pointer-events: all; }
+
+  .lb-header {
+    position: absolute; top: 0; left: 0; right: 0; z-index: 10;
+    padding: calc(var(--safe-top) + 10px) 16px 10px;
+    display: flex; align-items: center; justify-content: space-between;
+    background: linear-gradient(to bottom, rgba(0,0,0,0.7) 0%, transparent 100%);
+  }
+  .lb-close {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: rgba(255,255,255,0.12); border: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; backdrop-filter: blur(10px);
+    transition: background 0.2s;
+  }
+  .lb-close:active { background: rgba(255,255,255,0.25); }
+  .lb-title {
+    font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.9);
+    flex: 1; text-align: center; padding: 0 8px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .lb-info-btn {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: rgba(255,255,255,0.12); border: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 17px; font-weight: 700;
+    backdrop-filter: blur(10px);
+    transition: background 0.2s, background-color 0.2s;
+  }
+  .lb-info-btn.active { background: var(--gold); color: #000; }
+
+  /* Vertical scrolling image strip */
+  /* Horizontal slider — controlled, one photo per swipe */
+  .lb-images {
+    flex: 1; position: relative; overflow: hidden;
+    touch-action: none;
+  }
+  .lb-track {
+    display: flex; flex-direction: row;
+    width: 100%; height: 100%;
+    will-change: transform;
+    transition: transform 0.5s cubic-bezier(0.25,0.8,0.3,1);
+  }
+  .lb-slide {
+    flex: 0 0 100%; width: 100%; height: 100%;
+    display: flex; align-items: center; justify-content: center;
+    padding: 56px 0 80px;
+  }
+  .lb-img {
+    width: 100%;
+    max-height: 90vh;
+    object-fit: contain;
+    transform-origin: center center;
+    border-radius: 4px;
+    user-select: none; -webkit-user-drag: none;
+  }
+  /* Apple zoom-in animation */
+  .lb-img.zoom-in {
+    animation: appleZoomIn 0.42s cubic-bezier(0.34,1.56,0.64,1) forwards;
+  }
+  @keyframes appleZoomIn {
+    from { transform: scale(0.72) translateY(16px); opacity: 0; }
+    to   { transform: scale(1) translateY(0); opacity: 1; }
+  }
+
+  .lb-footer {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    padding: 10px 16px calc(var(--safe-bottom) + 10px);
+    display: flex; align-items: center; justify-content: center; gap: 12px;
+    background: linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 100%);
+  }
+  .lb-counter { font-size: 13px; color: rgba(255,255,255,0.5); }
+  .lb-nav {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: rgba(255,255,255,0.1); border: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    color: #fff;
+    transition: background 0.2s;
+  }
+  .lb-nav:active { background: rgba(255,255,255,0.25); }
+
+  /* ── Info panel (details sheet) ── */
+  #info-panel {
+    position: absolute; bottom: 0; left: 0; right: 0; z-index: 20;
+    background: rgba(13,13,20,0.96);
+    backdrop-filter: blur(30px) saturate(160%);
+    -webkit-backdrop-filter: blur(30px) saturate(160%);
+    border-top: 1px solid var(--border);
+    border-radius: 24px 24px 0 0;
+    padding: 0 20px calc(var(--safe-bottom) + 20px);
+    transform: translateY(100%);
+    transition: transform 0.42s cubic-bezier(0.32,0.72,0,1);
+    max-height: 55vh; overflow-y: auto;
+  }
+  #info-panel.open { transform: translateY(0); }
+  .panel-handle {
+    width: 36px; height: 4px; border-radius: 2px;
+    background: rgba(255,255,255,0.2);
+    margin: 10px auto 16px;
+  }
+  .panel-pdf-name {
+    font-size: 15px; font-weight: 700; color: var(--gold-light);
+    margin-bottom: 4px;
+  }
+  .panel-row {
+    display: flex; align-items: flex-start; gap: 10px;
+    padding: 10px 0; border-bottom: 1px solid var(--border);
+  }
+  .panel-row:last-child { border-bottom: none; }
+  .panel-label { font-size: 12px; color: var(--text3); min-width: 80px; }
+  .panel-value { font-size: 13px; color: var(--text); }
+
+  /* ── Catalogue viewer (grid of images inside a catalogue) ── */
+  #catalogue-view {
+    position: fixed; inset: 0; z-index: 300;
+    background: var(--bg);
+    display: flex; flex-direction: column;
+    transform: translateY(100%);
+    transition: transform 0.46s cubic-bezier(0.32,0.72,0,1);
+  }
+  #catalogue-view.open { transform: translateY(0); }
+
+  .cv-header {
+    padding: calc(var(--safe-top) + 12px) 16px 12px;
+    background: rgba(10,10,15,0.95);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 12px;
+  }
+  .cv-back {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: var(--surface2); border: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--text); flex-shrink: 0;
+    transition: background 0.2s;
+  }
+  .cv-back:active { background: var(--surface); }
+  .cv-title {
+    flex: 1; min-width: 0;
+  }
+  .cv-title h2 { font-size: 15px; font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .cv-title p { font-size: 12px; color: var(--text3); margin-top: 1px; }
+
+  .cv-images {
+    flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch;
+    padding: 12px;
+    columns: 1; column-gap: 0;
+    max-width: 640px; margin: 0 auto; width: 100%;
+  }
+  .cv-img-wrap {
+    break-inside: avoid; margin-bottom: 14px;
+    border-radius: 14px; overflow: hidden;
+    background: var(--surface2);
+    cursor: pointer;
+    position: relative;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.35);
+    transform-origin: center center;
+  }
+  .cv-img-wrap img {
+    width: 100%; display: block;
+    transition: transform 0.3s ease;
+  }
+  .cv-img-wrap:active img { transform: scale(0.96); }
+
+  /* Page indicator bottom */
+  .cv-footer {
+    padding: 8px 16px calc(var(--safe-bottom) + 8px);
+    text-align: center;
+    font-size: 12px; color: var(--text3);
+    border-top: 1px solid var(--border);
+  }
+
+  /* ── Empty state ── */
+  .empty {
+    text-align: center; padding: 60px 24px;
+    color: var(--text3); font-size: 15px;
+  }
+
+  /* ── Loading skeleton ── */
+  .skeleton {
+    background: linear-gradient(90deg, var(--surface2) 25%, var(--surface) 50%, var(--surface2) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.4s infinite;
+    border-radius: 8px;
+  }
+  @keyframes shimmer {
+    0%   { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+
+  /* Scroll padding */
+  .scroll-body {
+    padding-bottom: calc(var(--safe-bottom) + 20px);
+  }
+</style>
+</head>
+<body>
+
+<!-- Main Header -->
+<div class="header">
+  <div class="header-top">
+    <span class="brand">Design Gallery</span>
+    <span class="count-badge" id="total-count">Loading...</span>
+  </div>
+  <div class="search-wrap">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+    </svg>
+    <input id="search" type="search" placeholder="Search catalogues…" autocomplete="off" />
+  </div>
+  <div class="filters" id="filters"></div>
+</div>
+
+<!-- Main gallery grid -->
+<div class="scroll-body" id="main-grid"></div>
+
+<!-- Catalogue viewer overlay -->
+<div id="catalogue-view">
+  <div class="cv-header">
+    <button class="cv-back" onclick="closeCatalogue()">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <path d="M15 18l-6-6 6-6"/>
+      </svg>
+    </button>
+    <div class="cv-title">
+      <h2 id="cv-title-name"></h2>
+      <p id="cv-title-meta"></p>
+    </div>
+    <button class="lb-info-btn" id="cv-info-btn" onclick="toggleCatalogueInfo()">i</button>
+  </div>
+  <div class="cv-images" id="cv-images-grid"></div>
+  <div class="cv-footer" id="cv-footer-info"></div>
+
+  <!-- Info panel inside catalogue view -->
+  <div id="cv-info-panel">
+    <div class="panel-handle"></div>
+    <div id="cv-info-content"></div>
+  </div>
+</div>
+
+<!-- Lightbox -->
+<div id="lightbox">
+  <div class="lb-header">
+    <button class="lb-close" onclick="closeLightbox()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <path d="M18 6 6 18M6 6l12 12"/>
+      </svg>
+    </button>
+    <span class="lb-title" id="lb-title"></span>
+    <button class="lb-info-btn" id="lb-info-btn" onclick="toggleInfo()">i</button>
+  </div>
+  <div class="lb-images" id="lb-images"><div class="lb-track" id="lb-track"></div></div>
+  <div class="lb-footer">
+    <button class="lb-nav" onclick="navLightbox(-1)">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <path d="M15 18l-6-6 6-6"/>
+      </svg>
+    </button>
+    <span class="lb-counter" id="lb-counter"></span>
+    <button class="lb-nav" onclick="navLightbox(1)">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <path d="M9 18l6-6-6-6"/>
+      </svg>
+    </button>
+  </div>
+  <div id="info-panel">
+    <div class="panel-handle"></div>
+    <div id="info-content"></div>
+  </div>
+</div>
+
+<script>
+// ── Data & State ──────────────────────────────────────────────────────────────
+let ALL = [];
+let filtered = [];
+let activeFilter = 'All';
+let activeCatalogue = null;
+let lbImages = [];
+let lbIndex = 0;
+
+const IMG_BASE = 'extracted_images';
+const THUMB_BASE = 'thumbs';
+const DISPLAY_BASE = 'display';
+
+// Build tiered image URLs. Thumbnails/display are WebP; originals keep their ext.
+function thumbURL(catName, fileName) {
+  const base = fileName.replace(/\.[^.]+$/, '');
+  return `${THUMB_BASE}/${encodeURIComponent(catName)}/${encodeURIComponent(base)}.webp`;
+}
+function displayURL(catName, fileName) {
+  const base = fileName.replace(/\.[^.]+$/, '');
+  return `${DISPLAY_BASE}/${encodeURIComponent(catName)}/${encodeURIComponent(base)}.webp`;
+}
+function fullURL(catName, fileName) {
+  return `${IMG_BASE}/${encodeURIComponent(catName)}/${encodeURIComponent(fileName)}`;
+}
+// onerror handler string: fall back to the original file if the WebP is missing
+function fallbackAttr(catName, fileName) {
+  return `onerror="this.onerror=null;this.src='${fullURL(catName, fileName).replace(/'/g, "\\'")}'"`;
+}
+
+const TAG_CLASS = {
+  'Bridal':        'tag-bridal',
+  'RRR Catalogue': 'tag-rrr',
+  'OD Set':        'tag-od',
+  'Kids':          'tag-kids',
+  'Katchu Work':   'tag-katchu',
+  'Dress':         'tag-dress',
+  'Mirror Free':   'tag-mirror',
+};
+
+function tagClass(cat) { return TAG_CLASS[cat] || 'tag-default'; }
+
+// Deduplicate by name (keep first occurrence per unique base name)
+function deduplicateCatalogues(data) {
+  const seen = new Set();
+  return data.filter(c => {
+    // Normalize: strip trailing (1), (2), etc. for dedup key
+    const key = c.name.replace(/\s*\(\d+\)\s*$/, '').trim().toLowerCase();
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+// Clean display name
+function displayName(name) {
+  return name
+    .replace(/\s*\(\d+\)\s*$/, '')
+    .replace(/\s*all formats whatsapp.*$/i, '')
+    .replace(/^\d+\)\s*/, '')
+    .trim();
+}
+
+// Catalogue info details
+function catalogueInfo(cat) {
+  const name = cat.name;
+  let phone = null, date = null, series = null;
+
+  const phoneMatch = name.match(/\+?91\s*(\d{10})/);
+  if (phoneMatch) phone = '+91 ' + phoneMatch[1];
+
+  const dateMatch = name.match(/(\d{2}[-\/]\d{2}[-\/]\d{4}|\d{2}-\d{2}-\d{4})/);
+  if (dateMatch) date = dateMatch[1];
+
+  const seriesMatch = name.match(/(\d{4,5})\s*-\s*(\d{4,5})/);
+  if (seriesMatch) series = seriesMatch[0];
+
+  const vol = name.match(/Vol\s*(\d+)/i);
+
+  return { phone, date, series, vol: vol ? vol[1] : null };
+}
+
+// ── Render Main Grid ──────────────────────────────────────────────────────────
+function renderGrid() {
+  const grid = document.getElementById('main-grid');
+  const q = document.getElementById('search').value.trim().toLowerCase();
+
+  filtered = ALL.filter(c => {
+    const matchFilter = activeFilter === 'All' || c.category === activeFilter;
+    const matchSearch = !q || displayName(c.name).toLowerCase().includes(q) || c.category.toLowerCase().includes(q);
+    return matchFilter && matchSearch;
+  });
+
+  document.getElementById('total-count').textContent = filtered.length + ' catalogues';
+
+  if (filtered.length === 0) {
+    grid.innerHTML = '<div class="empty">No catalogues found</div>';
+    return;
+  }
+
+  // Group by category
+  const groups = {};
+  filtered.forEach(c => {
+    if (!groups[c.category]) groups[c.category] = [];
+    groups[c.category].push(c);
+  });
+
+  let html = '';
+  Object.entries(groups).forEach(([cat, items]) => {
+    html += `<div class="catalogue-section">
+      <div class="section-title">${cat}</div>
+      <div class="catalogue-grid">`;
+    items.forEach(c => {
+      const cover = c.images[0];
+      const dname = displayName(c.name);
+      html += `
+        <div class="cat-card" onclick="openCatalogue('${c.id}')">
+          <img class="cat-thumb" src="${thumbURL(c.name, cover)}" ${fallbackAttr(c.name, cover)} alt="${dname}" loading="lazy" decoding="async">
+          <div class="cat-info">
+            <div class="cat-name">${dname}</div>
+            <div class="cat-meta">
+              <span class="cat-count">${c.imageCount} images</span>
+              <span class="cat-tag ${tagClass(c.category)}">${c.category}</span>
+            </div>
+          </div>
+        </div>`;
+    });
+    html += `</div></div>`;
+  });
+
+  grid.innerHTML = html;
+}
+
+// ── Filters ───────────────────────────────────────────────────────────────────
+function buildFilters() {
+  const cats = ['All', ...new Set(ALL.map(c => c.category))];
+  const container = document.getElementById('filters');
+  container.innerHTML = cats.map(c =>
+    `<button class="pill ${c === 'All' ? 'active' : ''}" onclick="setFilter('${c}')">${c}</button>`
+  ).join('');
+}
+
+function setFilter(cat) {
+  activeFilter = cat;
+  document.querySelectorAll('.pill').forEach(p => {
+    p.classList.toggle('active', p.textContent === cat);
+  });
+  renderGrid();
+}
+
+// ── Catalogue Viewer ──────────────────────────────────────────────────────────
+function openCatalogue(id) {
+  activeCatalogue = ALL.find(c => c.id === id);
+  if (!activeCatalogue) return;
+
+  const c = activeCatalogue;
+  document.getElementById('cv-title-name').textContent = displayName(c.name);
+  document.getElementById('cv-title-meta').textContent = `${c.imageCount} images · ${c.category}`;
+  document.getElementById('cv-footer-info').textContent = `PDF: ${c.pdf}`;
+
+  // Render image grid (lazy, up to 200 shown, rest on scroll)
+  const grid = document.getElementById('cv-images-grid');
+  const batchSize = 60;
+  const showImages = c.images.slice(0, batchSize);
+
+  grid.innerHTML = showImages.map((img, i) =>
+    `<div class="cv-img-wrap" onclick="openLightbox(${i})">
+      <img src="${thumbURL(c.name, img)}" ${fallbackAttr(c.name, img)}
+           alt="Design ${i+1}" loading="lazy" decoding="async">
+    </div>`
+  ).join('');
+
+  // Lazy load more
+  let loaded = batchSize;
+  const observer = new IntersectionObserver(entries => {
+    if (entries[0].isIntersecting && loaded < c.images.length) {
+      const next = c.images.slice(loaded, loaded + batchSize);
+      const startIndex = loaded;
+      next.forEach((img, j) => {
+        const wrap = document.createElement('div');
+        wrap.className = 'cv-img-wrap';
+        wrap.onclick = () => openLightbox(startIndex + j);
+        wrap.innerHTML = `<img src="${thumbURL(c.name, img)}" ${fallbackAttr(c.name, img)} alt="Design ${startIndex+j+1}" loading="lazy" decoding="async">`;
+        grid.appendChild(wrap);
+      });
+      loaded += batchSize;
+    }
+  }, { root: grid, rootMargin: '200px' });
+
+  if (loaded < c.images.length) {
+    const sentinel = document.createElement('div');
+    sentinel.style.height = '1px';
+    grid.appendChild(sentinel);
+    observer.observe(sentinel);
+  }
+
+  document.getElementById('catalogue-view').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeCatalogue() {
+  document.getElementById('catalogue-view').classList.remove('open');
+  document.getElementById('cv-info-panel').classList.remove('open');
+  document.getElementById('cv-info-btn').classList.remove('active');
+  document.body.style.overflow = '';
+}
+
+function toggleCatalogueInfo() {
+  const panel = document.getElementById('cv-info-panel');
+  const btn = document.getElementById('cv-info-btn');
+  const isOpen = panel.classList.toggle('open');
+  btn.classList.toggle('active', isOpen);
+
+  if (isOpen && activeCatalogue) {
+    const c = activeCatalogue;
+    const info = catalogueInfo(c);
+    let rows = `<div class="panel-pdf-name">${c.pdf}</div>`;
+    rows += `<div class="panel-row"><span class="panel-label">Category</span><span class="panel-value">${c.category}</span></div>`;
+    rows += `<div class="panel-row"><span class="panel-label">Images</span><span class="panel-value">${c.imageCount}</span></div>`;
+    if (info.date)   rows += `<div class="panel-row"><span class="panel-label">Date</span><span class="panel-value">${info.date}</span></div>`;
+    if (info.series) rows += `<div class="panel-row"><span class="panel-label">Series</span><span class="panel-value">${info.series}</span></div>`;
+    if (info.phone)  rows += `<div class="panel-row"><span class="panel-label">Contact</span><span class="panel-value">${info.phone}</span></div>`;
+    if (info.vol)    rows += `<div class="panel-row"><span class="panel-label">Volume</span><span class="panel-value">${info.vol}</span></div>`;
+    document.getElementById('cv-info-content').innerHTML = rows;
+  }
+}
+
+// Apply info panel CSS to cv-info-panel
+const cvInfoStyle = document.createElement('style');
+cvInfoStyle.textContent = `
+  #cv-info-panel {
+    position: absolute; bottom: 0; left: 0; right: 0; z-index: 20;
+    background: rgba(13,13,20,0.96);
+    backdrop-filter: blur(30px) saturate(160%);
+    -webkit-backdrop-filter: blur(30px) saturate(160%);
+    border-top: 1px solid var(--border);
+    border-radius: 24px 24px 0 0;
+    padding: 0 20px calc(env(safe-area-inset-bottom,0px) + 20px);
+    transform: translateY(100%);
+    transition: transform 0.42s cubic-bezier(0.32,0.72,0,1);
+    max-height: 55vh; overflow-y: auto;
+  }
+  #cv-info-panel.open { transform: translateY(0); }
+`;
+document.head.appendChild(cvInfoStyle);
+
+// ── Lightbox ──────────────────────────────────────────────────────────────────
+function openLightbox(index) {
+  if (!activeCatalogue) return;
+  lbImages = activeCatalogue.images;
+  lbIndex = index;
+
+  const c = activeCatalogue;
+  document.getElementById('lb-title').textContent = displayName(c.name);
+  document.getElementById('info-panel').classList.remove('open');
+  document.getElementById('lb-info-btn').classList.remove('active');
+
+  renderLightboxImages();
+  updateCounter();
+  resetLbZoom();
+
+  const lb = document.getElementById('lightbox');
+  lb.classList.add('open');
+
+  // Position track at the correct slide
+  requestAnimationFrame(() => {
+    setTrackPosition(false);
+    const track = document.getElementById('lb-track');
+    const imgs = track.querySelectorAll('.lb-img');
+    if (imgs[index]) {
+      imgs[index].classList.remove('zoom-in');
+      void imgs[index].offsetWidth;
+      imgs[index].classList.add('zoom-in');
+    }
+  });
+}
+
+// Position the track based on lbIndex (horizontal)
+function setTrackPosition(animate = true) {
+  const track = document.getElementById('lb-track');
+  track.style.transition = animate
+    ? 'transform 0.5s cubic-bezier(0.25,0.8,0.3,1)'
+    : 'none';
+  track.style.transform = `translateX(${-lbIndex * 100}%)`;
+}
+
+// ── Zoom state for the active image ──
+let lbZoom = { scale: 1, tx: 0, ty: 0 };
+
+function lbCurrentImg() {
+  return document.querySelectorAll('#lb-track .lb-img')[lbIndex];
+}
+function applyLbZoom(animate) {
+  const img = lbCurrentImg();
+  if (!img) return;
+  img.classList.remove('zoom-in'); // let inline transform win over the entrance animation
+  img.style.transition = animate
+    ? 'transform 0.3s cubic-bezier(0.25,0.8,0.3,1)'
+    : 'none';
+  img.style.transform = `translate(${lbZoom.tx}px, ${lbZoom.ty}px) scale(${lbZoom.scale})`;
+}
+function resetLbZoom() { lbZoom = { scale: 1, tx: 0, ty: 0 }; }
+function clearImgTransform(idx) {
+  const img = document.querySelectorAll('#lb-track .lb-img')[idx];
+  if (img) {
+    img.classList.remove('zoom-in');
+    img.style.transition = 'transform 0.3s';
+    img.style.transform = '';
+  }
+}
+function clampLbPan() {
+  const img = lbCurrentImg();
+  if (!img) return;
+  const maxX = Math.max(0, (img.offsetWidth  * (lbZoom.scale - 1)) / 2);
+  const maxY = Math.max(0, (img.offsetHeight * (lbZoom.scale - 1)) / 2);
+  lbZoom.tx = Math.max(-maxX, Math.min(maxX, lbZoom.tx));
+  lbZoom.ty = Math.max(-maxY, Math.min(maxY, lbZoom.ty));
+}
+function isZoomed() { return lbZoom.scale > 1.01; }
+
+function renderLightboxImages() {
+  const c = activeCatalogue;
+  const track = document.getElementById('lb-track');
+  track.innerHTML = '';
+
+  lbImages.forEach((img, i) => {
+    const slide = document.createElement('div');
+    slide.className = 'lb-slide';
+    const im = document.createElement('img');
+    im.className = 'lb-img';
+    im.alt = `Design ${i+1}`;
+    im.decoding = 'async';
+    im.draggable = false;
+    im.loading = Math.abs(i - lbIndex) <= 2 ? 'eager' : 'lazy';
+    im.src = displayURL(c.name, img);
+    im.onerror = function() { this.onerror = null; this.src = fullURL(c.name, img); };
+    slide.appendChild(im);
+    track.appendChild(slide);
+  });
+}
+
+function updateCounter() {
+  document.getElementById('lb-counter').textContent = `${lbIndex + 1} / ${lbImages.length}`;
+}
+
+function navLightbox(dir) {
+  const newIndex = Math.max(0, Math.min(lbImages.length - 1, lbIndex + dir));
+  if (newIndex === lbIndex) return;
+  lbIndex = newIndex;
+  setTrackPosition(true);
+  updateCounter();
+}
+
+function closeLightbox() {
+  const lb = document.getElementById('lightbox');
+  lb.classList.remove('open');
+  document.getElementById('info-panel').classList.remove('open');
+  document.getElementById('lb-info-btn').classList.remove('active');
+}
+
+// Touch gestures: horizontal swipe = one photo per swipe
+(function() {
+  const imagesEl = document.getElementById('lb-images');
+  let startX = 0, startY = 0, dx = 0, dy = 0;
+  let axis = null;          // 'x' | 'y' | null
+  let dragging = false;
+  const W = () => imagesEl.clientWidth;
+
+  imagesEl.addEventListener('touchstart', e => {
+    if (e.touches.length !== 1) return;
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+    dx = 0; dy = 0; axis = null; dragging = true;
+    const track = document.getElementById('lb-track');
+    track.style.transition = 'none';
+  }, { passive: true });
+
+  imagesEl.addEventListener('touchmove', e => {
+    if (!dragging) return;
+    dx = e.touches[0].clientX - startX;
+    dy = e.touches[0].clientY - startY;
+
+    // Lock the axis on first meaningful movement
+    if (!axis && (Math.abs(dx) > 8 || Math.abs(dy) > 8)) {
+      axis = Math.abs(dx) > Math.abs(dy) ? 'x' : 'y';
+    }
+
+    if (axis === 'x') {
+      const track = document.getElementById('lb-track');
+      let offset = dx;
+      // Resistance at the ends
+      if ((lbIndex === 0 && dx > 0) ||
+          (lbIndex === lbImages.length - 1 && dx < 0)) {
+        offset = dx * 0.35;
+      }
+      track.style.transform = `translateX(calc(${-lbIndex * 100}% + ${offset}px))`;
+    }
+  }, { passive: true });
+
+  imagesEl.addEventListener('touchend', () => {
+    if (!dragging) return;
+    dragging = false;
+
+    if (axis === 'x') {
+      // One photo per swipe: move at most ±1
+      const threshold = W() * 0.15;
+      if (dx <= -threshold && lbIndex < lbImages.length - 1) {
+        lbIndex++;
+      } else if (dx >= threshold && lbIndex > 0) {
+        lbIndex--;
+      }
+      setTrackPosition(true);
+      updateCounter();
+    }
+    axis = null;
+  });
+})();
+
+function toggleInfo() {
+  const panel = document.getElementById('info-panel');
+  const btn = document.getElementById('lb-info-btn');
+  const isOpen = panel.classList.toggle('open');
+  btn.classList.toggle('active', isOpen);
+
+  if (isOpen && activeCatalogue) {
+    const c = activeCatalogue;
+    const info = catalogueInfo(c);
+    let html = `<div class="panel-pdf-name">${c.pdf}</div>`;
+    html += `<div class="panel-row"><span class="panel-label">Catalogue</span><span class="panel-value">${displayName(c.name)}</span></div>`;
+    html += `<div class="panel-row"><span class="panel-label">Category</span><span class="panel-value">${c.category}</span></div>`;
+    html += `<div class="panel-row"><span class="panel-label">Total</span><span class="panel-value">${c.imageCount} images</span></div>`;
+    html += `<div class="panel-row"><span class="panel-label">Viewing</span><span class="panel-value">Image ${lbIndex + 1}</span></div>`;
+    if (info.date)   html += `<div class="panel-row"><span class="panel-label">Date</span><span class="panel-value">${info.date}</span></div>`;
+    if (info.series) html += `<div class="panel-row"><span class="panel-label">Series</span><span class="panel-value">${info.series}</span></div>`;
+    if (info.phone)  html += `<div class="panel-row"><span class="panel-label">Contact</span><span class="panel-value">${info.phone}</span></div>`;
+    if (info.vol)    html += `<div class="panel-row"><span class="panel-label">Volume</span><span class="panel-value">${info.vol}</span></div>`;
+    document.getElementById('info-content').innerHTML = html;
+  }
+}
+
+// ── Keyboard nav ──────────────────────────────────────────────────────────────
+document.addEventListener('keydown', e => {
+  if (document.getElementById('lightbox').classList.contains('open')) {
+    if (e.key === 'ArrowRight') navLightbox(1);
+    if (e.key === 'ArrowLeft')  navLightbox(-1);
+    if (e.key === 'Escape')     closeLightbox();
+  } else if (document.getElementById('catalogue-view').classList.contains('open')) {
+    if (e.key === 'Escape') closeCatalogue();
+  }
+});
+
+// ── Search ────────────────────────────────────────────────────────────────────
+document.getElementById('search').addEventListener('input', () => {
+  clearTimeout(window._searchTimer);
+  window._searchTimer = setTimeout(renderGrid, 200);
+});
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+fetch('gallery.json')
+  .then(r => r.json())
+  .then(data => {
+    ALL = deduplicateCatalogues(data);
+    buildFilters();
+    renderGrid();
+  })
+  .catch(() => {
+    document.getElementById('main-grid').innerHTML = '<div class="empty">Could not load gallery.json</div>';
+  });
+</script>
+</body>
+</html>

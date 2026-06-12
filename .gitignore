@@ -1,0 +1,14 @@
+# Heavy image directories (hosted on R2 instead)
+thumbs/
+display/
+extracted_images/
+
+# Source PDF catalogues (local master copies, not deployed)
+*.pdf
+*.jpeg
+*.jpg
+*.zip
+
+# Python cache
+__pycache__/
+*.pyc
