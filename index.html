@@ -495,6 +495,7 @@ function openLightboxForCat(cat, index) {
   resetLbZoom();
   const lb = document.getElementById('lightbox');
   lb.classList.add('open');
+  history.pushState({ lightbox: true, catId: cat.id, idx: index }, '');
   requestAnimationFrame(() => {
     setTrackPosition(false);
     const imgs = document.querySelectorAll('#lb-track .lb-img');
@@ -633,9 +634,11 @@ function navLightbox(dir) {
 
 function closeLightbox() {
   const lb = document.getElementById('lightbox');
+  if (!lb.classList.contains('open')) return;
   lb.classList.remove('open');
   document.getElementById('info-panel').classList.remove('open');
   document.getElementById('lb-info-btn').classList.remove('active');
+  if (history.state && history.state.lightbox) history.back();
 }
 
 // Touch gestures
@@ -754,6 +757,16 @@ document.addEventListener('keydown', e => {
     if (e.key === 'ArrowRight') navLightbox(1);
     if (e.key === 'ArrowLeft')  navLightbox(-1);
     if (e.key === 'Escape')     closeLightbox();
+  }
+});
+
+// ── Back button handling ──────────────────────────────────────────────────────
+window.addEventListener('popstate', () => {
+  const lb = document.getElementById('lightbox');
+  if (lb.classList.contains('open')) {
+    lb.classList.remove('open');
+    document.getElementById('info-panel').classList.remove('open');
+    document.getElementById('lb-info-btn').classList.remove('active');
   }
 });
 
