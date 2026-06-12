@@ -775,9 +775,25 @@ function renderLightboxImages() {
     im.alt = `Design ${i+1}`;
     im.decoding = 'async';
     im.draggable = false;
-    im.loading = Math.abs(i - lbIndex) <= 2 ? 'eager' : 'lazy';
-    im.src = displayURL(c.name, img);
-    im.onerror = function() { this.onerror = null; this.src = fullURL(c.name, img); };
+
+    const isNearby = Math.abs(i - lbIndex) <= 2;
+    const thumbSrc = thumbURL(c.name, img);
+    const dispSrc = displayURL(c.name, img);
+
+    // Show thumbnail instantly, then swap to high-res when loaded
+    im.src = thumbSrc;
+    im.loading = isNearby ? 'eager' : 'lazy';
+
+    if (isNearby) {
+      const preload = new Image();
+      preload.onload = function() { im.src = dispSrc; };
+      preload.onerror = function() { im.src = fullURL(c.name, img); };
+      preload.src = dispSrc;
+    } else {
+      im.dataset.hires = dispSrc;
+    }
+    im.onerror = function() { if (this.src !== dispSrc) { this.onerror = null; this.src = fullURL(c.name, img); } };
+
     slide.appendChild(im);
     track.appendChild(slide);
   });
@@ -785,6 +801,25 @@ function renderLightboxImages() {
 
 function updateCounter() {
   document.getElementById('lb-counter').textContent = `${lbIndex + 1} / ${lbImages.length}`;
+}
+
+function upgradeToHires(idx) {
+  const imgs = document.querySelectorAll('#lb-track .lb-img');
+  const im = imgs[idx];
+  if (!im || !im.dataset.hires) return;
+  const hires = im.dataset.hires;
+  delete im.dataset.hires;
+  const preload = new Image();
+  preload.onload = function() { im.src = hires; };
+  preload.onerror = function() { im.onerror = null; im.src = fullURL(activeCatalogue.name, lbImages[idx]); };
+  preload.src = hires;
+}
+
+function upgradeNearby() {
+  for (let d = 0; d <= 2; d++) {
+    upgradeToHires(lbIndex + d);
+    if (d > 0) upgradeToHires(lbIndex - d);
+  }
 }
 
 function navLightbox(dir) {
@@ -795,6 +830,7 @@ function navLightbox(dir) {
   lbIndex = newIndex;
   setTrackPosition(true);
   updateCounter();
+  upgradeNearby();
 }
 
 function closeLightbox() {
