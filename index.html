@@ -451,9 +451,9 @@ let activeCatalogue = null;
 let lbImages = [];
 let lbIndex = 0;
 
-const IMG_BASE = 'extracted_images';
-const THUMB_BASE = 'thumbs';
-const DISPLAY_BASE = 'display';
+const IMG_BASE = 'https://pub-6f8f3598321b4c09919511f426dd591d.r2.dev';
+const THUMB_BASE = 'https://pub-6f8f3598321b4c09919511f426dd591d.r2.dev/thumbs';
+const DISPLAY_BASE = 'https://pub-6f8f3598321b4c09919511f426dd591d.r2.dev/display';
 
 // Build tiered image URLs. Thumbnails/display are WebP; originals keep their ext.
 function thumbURL(catName, fileName) {
@@ -790,6 +790,8 @@ function updateCounter() {
 function navLightbox(dir) {
   const newIndex = Math.max(0, Math.min(lbImages.length - 1, lbIndex + dir));
   if (newIndex === lbIndex) return;
+  clearImgTransform(lbIndex);
+  resetLbZoom();
   lbIndex = newIndex;
   setTrackPosition(true);
   updateCounter();
@@ -802,37 +804,63 @@ function closeLightbox() {
   document.getElementById('lb-info-btn').classList.remove('active');
 }
 
-// Touch gestures: horizontal swipe = one photo per swipe
+// Touch gestures: pinch-zoom, double-tap zoom, pan when zoomed, swipe one photo
 (function() {
   const imagesEl = document.getElementById('lb-images');
-  let startX = 0, startY = 0, dx = 0, dy = 0;
-  let axis = null;          // 'x' | 'y' | null
-  let dragging = false;
+  let startX = 0, startY = 0, dx = 0, dy = 0, axis = null, dragging = false;
+  let mode = null;            // 'swipe' | 'pan' | 'pinch'
+  let pinchStartDist = 0, pinchStartScale = 1;
+  let panStartTx = 0, panStartTy = 0;
+  let lastTap = 0, lastTapX = 0, lastTapY = 0;
   const W = () => imagesEl.clientWidth;
 
+  const dist = t => Math.hypot(t[1].clientX - t[0].clientX, t[1].clientY - t[0].clientY);
+
   imagesEl.addEventListener('touchstart', e => {
-    if (e.touches.length !== 1) return;
-    startX = e.touches[0].clientX;
-    startY = e.touches[0].clientY;
-    dx = 0; dy = 0; axis = null; dragging = true;
-    const track = document.getElementById('lb-track');
-    track.style.transition = 'none';
+    document.getElementById('lb-track').style.transition = 'none';
+    if (e.touches.length === 2) {
+      mode = 'pinch';
+      pinchStartDist = dist(e.touches);
+      pinchStartScale = lbZoom.scale;
+      dragging = false;
+      return;
+    }
+    if (e.touches.length === 1) {
+      startX = e.touches[0].clientX;
+      startY = e.touches[0].clientY;
+      dx = 0; dy = 0; axis = null; dragging = true;
+      if (isZoomed()) { mode = 'pan'; panStartTx = lbZoom.tx; panStartTy = lbZoom.ty; }
+      else { mode = 'swipe'; }
+    }
   }, { passive: true });
 
   imagesEl.addEventListener('touchmove', e => {
-    if (!dragging) return;
+    if (mode === 'pinch' && e.touches.length === 2) {
+      let s = pinchStartScale * (dist(e.touches) / pinchStartDist);
+      s = Math.max(1, Math.min(4, s));
+      lbZoom.scale = s;
+      clampLbPan();
+      applyLbZoom(false);
+      return;
+    }
+    if (!dragging || e.touches.length !== 1) return;
     dx = e.touches[0].clientX - startX;
     dy = e.touches[0].clientY - startY;
 
-    // Lock the axis on first meaningful movement
+    if (mode === 'pan') {
+      lbZoom.tx = panStartTx + dx;
+      lbZoom.ty = panStartTy + dy;
+      clampLbPan();
+      applyLbZoom(false);
+      return;
+    }
+    // swipe
     if (!axis && (Math.abs(dx) > 8 || Math.abs(dy) > 8)) {
       axis = Math.abs(dx) > Math.abs(dy) ? 'x' : 'y';
     }
-
     if (axis === 'x') {
       const track = document.getElementById('lb-track');
       let offset = dx;
-      // Resistance at the ends
       if ((lbIndex === 0 && dx > 0) ||
           (lbIndex === lbImages.length - 1 && dx < 0)) {
         offset = dx * 0.35;
@@ -842,22 +870,66 @@ function closeLightbox() {
   }, { passive: true });
 
   imagesEl.addEventListener('touchend', () => {
-    if (!dragging) return;
-    dragging = false;
-
-    if (axis === 'x') {
-      // One photo per swipe: move at most ±1
-      const threshold = W() * 0.15;
-      if (dx <= -threshold && lbIndex < lbImages.length - 1) {
-        lbIndex++;
-      } else if (dx >= threshold && lbIndex > 0) {
-        lbIndex--;
-      }
-      setTrackPosition(true);
-      updateCounter();
+    if (mode === 'pinch') {
+      if (lbZoom.scale < 1.05) { resetLbZoom(); }
+      clampLbPan();
+      applyLbZoom(true);
+      mode = null; dragging = false; axis = null;
+      return;
     }
-    axis = null;
+    if (mode === 'pan') {
+      clampLbPan();
+      applyLbZoom(true);
+      mode = null; dragging = false; axis = null;
+      return;
+    }
+    if (mode === 'swipe' && dragging) {
+      // Double-tap to zoom (only when the touch barely moved)
+      if (Math.abs(dx) < 10 && Math.abs(dy) < 10) {
+        const now = Date.now();
+        if (now - lastTap < 300 &&
+            Math.abs(startX - lastTapX) < 40 && Math.abs(startY - lastTapY) < 40) {
+          doubleTapZoom(startX, startY);
+          lastTap = 0;
+          dragging = false; mode = null; axis = null;
+          return;
+        }
+        lastTap = now; lastTapX = startX; lastTapY = startY;
+      }
+      if (axis === 'x') {
+        const threshold = W() * 0.15;
+        if (dx <= -threshold && lbIndex < lbImages.length - 1) {
+          clearImgTransform(lbIndex); resetLbZoom(); lbIndex++;
+        } else if (dx >= threshold && lbIndex > 0) {
+          clearImgTransform(lbIndex); resetLbZoom(); lbIndex--;
+        }
+        setTrackPosition(true);
+        updateCounter();
+      }
+    }
+    dragging = false; mode = null; axis = null;
   });
+
+  function doubleTapZoom(tapX, tapY) {
+    const img = lbCurrentImg();
+    if (!img) return;
+    if (isZoomed()) {
+      resetLbZoom();
+      applyLbZoom(true);
+    } else {
+      const rect = img.getBoundingClientRect();
+      const cx = tapX - (rect.left + rect.width / 2);
+      const cy = tapY - (rect.top + rect.height / 2);
+      lbZoom.scale = 2.5;
+      lbZoom.tx = cx * (1 - lbZoom.scale);
+      lbZoom.ty = cy * (1 - lbZoom.scale);
+      clampLbPan();
+      applyLbZoom(true);
+    }
+  }
+
+  // Desktop: double-click to zoom in/out
+  imagesEl.addEventListener('dblclick', e => doubleTapZoom(e.clientX, e.clientY));
 })();
 
 function toggleInfo() {
